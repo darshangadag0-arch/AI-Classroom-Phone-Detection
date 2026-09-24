@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
+import textwrap
+
 
 # =========================================================
 # PAGE CONFIGURATION
@@ -14,15 +16,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
+# =========================================================
+# HTML HELPER
+# Prevents Streamlit from showing HTML as code
+# =========================================================
+
+def html(content):
+    st.markdown(
+        textwrap.dedent(content),
+        unsafe_allow_html=True
+    )
+
+
 # =========================================================
 # CUSTOM CSS
-# PPT-INSPIRED: WHITE + BLUE + ORANGE
+# PPT-INSPIRED DESIGN
+# White + Blue/Grey + Orange
 # =========================================================
 
 st.markdown("""
 <style>
 
-    /* ---------- GLOBAL ---------- */
+    /* ================= GLOBAL ================= */
 
     .stApp {
         background: #FAFAF8;
@@ -33,21 +49,21 @@ st.markdown("""
         background: #FAFAF8;
     }
 
-    /* Remove default top padding */
     .block-container {
         padding-top: 2rem;
         padding-bottom: 3rem;
         max-width: 1400px;
     }
 
-    /* ---------- TECHNICAL DOT BACKGROUND ---------- */
+
+    /* ================= DOT BACKGROUND ================= */
 
     .stApp::before {
         content: "";
         position: fixed;
         inset: 0;
         pointer-events: none;
-        opacity: 0.18;
+        opacity: 0.16;
         z-index: 0;
 
         background-image:
@@ -56,23 +72,28 @@ st.markdown("""
         background-size: 14px 14px;
     }
 
-    /* Keep content above background */
+
     .main > div {
         position: relative;
         z-index: 1;
     }
 
-    /* ---------- HEADER ---------- */
+
+    /* ================= HEADER ================= */
 
     .hero {
-        background: rgba(255,255,255,0.96);
+        background: rgba(255, 255, 255, 0.97);
         border: 1.5px solid #8AA6B5;
         border-radius: 18px;
         padding: 30px 34px;
-        margin-bottom: 26px;
+        margin-bottom: 28px;
         position: relative;
         overflow: hidden;
+
+        box-shadow:
+            0 5px 18px rgba(35, 55, 65, 0.06);
     }
+
 
     .hero::before {
         content: "";
@@ -84,26 +105,29 @@ st.markdown("""
         background: #E9A23B;
     }
 
+
     .hero-label {
-        display: inline-block;
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 1.8px;
         color: #687780;
-        margin-bottom: 8px;
+        margin-bottom: 9px;
     }
+
 
     .hero-title {
         font-size: 36px;
-        line-height: 1.1;
+        line-height: 1.15;
         font-weight: 800;
         color: #20252B;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
+
 
     .hero-title span {
         color: #D88A20;
     }
+
 
     .hero-subtitle {
         font-size: 16px;
@@ -112,15 +136,17 @@ st.markdown("""
         max-width: 850px;
     }
 
-    /* ---------- SECTION TITLE ---------- */
+
+    /* ================= SECTION TITLE ================= */
 
     .section-title {
         font-size: 24px;
         font-weight: 800;
         color: #20252B;
-        margin-top: 10px;
+        margin-top: 12px;
         margin-bottom: 18px;
     }
+
 
     .section-title::after {
         content: "";
@@ -132,98 +158,111 @@ st.markdown("""
         margin-top: 8px;
     }
 
-    /* ---------- INFO CARDS ---------- */
 
-    .info-card {
-        background: rgba(255,255,255,0.96);
+    /* ================= FLOW CARDS ================= */
+
+    .flow-box {
+        background: rgba(255, 255, 255, 0.97);
         border: 1px solid #B5C7D0;
         border-radius: 14px;
-        padding: 20px;
-        height: 100%;
-        box-shadow: 0 4px 15px rgba(35,55,65,0.06);
+        padding: 20px 12px;
+        text-align: center;
+        min-height: 95px;
+
+        box-shadow:
+            0 4px 14px rgba(35, 55, 65, 0.05);
     }
 
-    .card-number {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: #E9A23B;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+
+    .flow-number {
+        color: #D88A20;
+        font-size: 12px;
         font-weight: 800;
-        margin-bottom: 12px;
+        letter-spacing: 1px;
     }
 
-    .card-title {
-        font-size: 17px;
-        font-weight: 750;
+
+    .flow-title {
         color: #20252B;
-        margin-bottom: 6px;
-    }
-
-    .card-text {
         font-size: 14px;
-        color: #68747C;
-        line-height: 1.55;
+        font-weight: 750;
+        margin-top: 8px;
     }
 
-    /* ---------- DETECTION RESULT ---------- */
+
+    /* ================= RESULT CARD ================= */
 
     .result-card {
         background: white;
         border: 1.5px solid #91AAB8;
         border-radius: 16px;
-        padding: 22px;
-        box-shadow: 0 5px 18px rgba(35,55,65,0.07);
+        padding: 23px;
+
+        box-shadow:
+            0 5px 18px rgba(35, 55, 65, 0.07);
     }
+
 
     .result-label {
         font-size: 12px;
         font-weight: 800;
         letter-spacing: 1.5px;
         color: #71818A;
-        margin-bottom: 7px;
+        margin-bottom: 8px;
     }
 
+
     .result-number {
-        font-size: 38px;
+        font-size: 42px;
         font-weight: 850;
         color: #20252B;
         line-height: 1;
     }
 
+
     .result-description {
-        margin-top: 8px;
+        margin-top: 9px;
         color: #68747C;
         font-size: 14px;
+        line-height: 1.5;
     }
 
-    /* ---------- DETECTION STATUS ---------- */
+
+    /* ================= DETECTED STATUS ================= */
 
     .status-detected {
         background: #FFF5E8;
         border: 1.5px solid #E9A23B;
         border-radius: 14px;
         padding: 18px;
-        margin-top: 15px;
+        margin-top: 16px;
     }
+
+
+    .status-detected .status-title {
+        font-size: 19px;
+        font-weight: 800;
+        color: #B86D08;
+        margin-bottom: 6px;
+    }
+
 
     .status-normal {
         background: #F3F8FA;
         border: 1.5px solid #91AAB8;
         border-radius: 14px;
         padding: 18px;
-        margin-top: 15px;
+        margin-top: 16px;
     }
 
-    .status-title {
+
+    .status-normal .status-title {
         font-size: 19px;
         font-weight: 800;
-        color: #20252B;
-        margin-bottom: 5px;
+        color: #405963;
+        margin-bottom: 6px;
     }
+
 
     .status-text {
         font-size: 14px;
@@ -231,7 +270,8 @@ st.markdown("""
         line-height: 1.5;
     }
 
-    /* ---------- MODEL BADGE ---------- */
+
+    /* ================= MODEL BADGE ================= */
 
     .model-badge {
         display: inline-block;
@@ -242,82 +282,47 @@ st.markdown("""
         color: #44535B;
         font-size: 12px;
         font-weight: 700;
-        margin-top: 8px;
     }
 
-    /* ---------- FLOW ---------- */
 
-    .flow-box {
-        background: white;
-        border: 1px solid #AFC0C8;
-        border-radius: 14px;
-        padding: 18px;
-        text-align: center;
-        height: 100%;
-    }
-
-    .flow-number {
-        color: #D88A20;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 1px;
-    }
-
-    .flow-title {
-        color: #20252B;
-        font-size: 15px;
-        font-weight: 750;
-        margin-top: 7px;
-    }
-
-    /* ---------- SIDEBAR ---------- */
+    /* ================= SIDEBAR ================= */
 
     section[data-testid="stSidebar"] {
         background: #F3F5F5;
         border-right: 1px solid #C2D0D6;
     }
 
+
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {
         color: #20252B;
     }
 
-    /* ---------- TABS ---------- */
+
+    /* ================= TABS ================= */
 
     button[data-baseweb="tab"] {
         font-weight: 700;
         color: #59666D;
     }
 
+
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #D88A20;
     }
 
-    /* ---------- BUTTON ---------- */
 
-    .stButton > button {
-        border: 1px solid #9BAEB7;
-        border-radius: 10px;
-        background: white;
-        color: #20252B;
-        font-weight: 700;
-    }
-
-    .stButton > button:hover {
-        border-color: #E9A23B;
-        color: #D88A20;
-    }
-
-    /* ---------- FOOTER ---------- */
+    /* ================= FOOTER ================= */
 
     .footer {
         text-align: center;
-        margin-top: 35px;
+        margin-top: 40px;
         padding-top: 18px;
         border-top: 1px solid #D2DADD;
         color: #7A858B;
         font-size: 12px;
     }
+
 
 </style>
 """, unsafe_allow_html=True)
@@ -327,7 +332,7 @@ st.markdown("""
 # HEADER
 # =========================================================
 
-st.markdown("""
+html("""
 <div class="hero">
 
     <div class="hero-label">
@@ -339,16 +344,16 @@ st.markdown("""
     </div>
 
     <div class="hero-subtitle">
-        Computer vision based mobile phone detection system using
-        YOLOv8 object detection.
+        Computer vision based mobile phone detection system
+        using YOLOv8 object detection.
     </div>
 
 </div>
-""", unsafe_allow_html=True)
+""")
 
 
 # =========================================================
-# LOAD MODEL
+# LOAD YOLO MODEL
 # =========================================================
 
 @st.cache_resource
@@ -369,10 +374,11 @@ with st.sidebar:
 
     st.markdown("## ⚙️ Model Configuration")
 
-    st.markdown(
-        '<div class="model-badge">YOLOv8 Medium · yolov8m.pt</div>',
-        unsafe_allow_html=True
-    )
+    html("""
+    <div class="model-badge">
+        YOLOv8 Medium · yolov8m.pt
+    </div>
+    """)
 
     st.write("")
 
@@ -389,10 +395,14 @@ with st.sidebar:
     st.markdown("### Model Information")
 
     st.markdown("""
-    **Model:** YOLOv8 Medium  
-    **Target:** Mobile Phone  
-    **Class ID:** 67  
-    **Interface:** Streamlit  
+    **Model:** YOLOv8 Medium
+
+    **Target:** Mobile Phone
+
+    **Class ID:** 67
+
+    **Interface:** Streamlit
+
     **Input:** Image / Camera Snapshot
     """)
 
@@ -402,57 +412,70 @@ with st.sidebar:
 
 
 # =========================================================
-# PROJECT FLOW
+# DETECTION FLOW
 # =========================================================
 
-st.markdown(
-    '<div class="section-title">Detection Flow</div>',
-    unsafe_allow_html=True
-)
+html("""
+<div class="section-title">
+    Detection Flow
+</div>
+""")
+
 
 flow1, flow2, flow3, flow4, flow5 = st.columns(5)
 
+
 with flow1:
-    st.markdown("""
+
+    html("""
     <div class="flow-box">
         <div class="flow-number">01</div>
         <div class="flow-title">Input Image</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
+
 
 with flow2:
-    st.markdown("""
+
+    html("""
     <div class="flow-box">
         <div class="flow-number">02</div>
         <div class="flow-title">Image Processing</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
+
 
 with flow3:
-    st.markdown("""
+
+    html("""
     <div class="flow-box">
         <div class="flow-number">03</div>
         <div class="flow-title">YOLOv8</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
+
 
 with flow4:
-    st.markdown("""
+
+    html("""
     <div class="flow-box">
         <div class="flow-number">04</div>
         <div class="flow-title">Phone Detection</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
+
 
 with flow5:
-    st.markdown("""
+
+    html("""
     <div class="flow-box">
         <div class="flow-number">05</div>
         <div class="flow-title">Detection Result</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 
+st.write("")
 st.write("")
 
 
@@ -467,15 +490,16 @@ tab1, tab2 = st.tabs([
 
 
 # =========================================================
-# CAMERA SNAPSHOT
+# TAB 1 — CAMERA SNAPSHOT
 # =========================================================
 
 with tab1:
 
-    st.markdown(
-        '<div class="section-title">Camera Snapshot</div>',
-        unsafe_allow_html=True
-    )
+    html("""
+    <div class="section-title">
+        Camera Snapshot
+    </div>
+    """)
 
     camera_image = st.camera_input(
         "Capture a classroom image"
@@ -484,8 +508,10 @@ with tab1:
     if camera_image is not None:
 
         image = Image.open(camera_image).convert("RGB")
+
         img_array = np.array(image)
 
+        # YOLO Prediction
         results = model.predict(
             img_array,
             conf=conf_thresh,
@@ -494,32 +520,44 @@ with tab1:
         )
 
         boxes = results[0].boxes
+
         annotated_img = results[0].plot()
 
-        col1, col2 = st.columns([3, 2], gap="large")
 
-        # IMAGE
+        col1, col2 = st.columns(
+            [3, 2],
+            gap="large"
+        )
+
+
+        # ---------------- IMAGE ----------------
+
         with col1:
 
-            st.markdown(
-                '<div class="section-title">Detection Analysis</div>',
-                unsafe_allow_html=True
-            )
+            html("""
+            <div class="section-title">
+                Detection Analysis
+            </div>
+            """)
 
             st.image(
                 annotated_img,
                 use_container_width=True
             )
 
-        # RESULT
+
+        # ---------------- RESULTS ----------------
+
         with col2:
 
-            st.markdown(
-                '<div class="section-title">Detection Result</div>',
-                unsafe_allow_html=True
-            )
+            html("""
+            <div class="section-title">
+                Detection Result
+            </div>
+            """)
 
-            st.markdown(f"""
+
+            html(f"""
             <div class="result-card">
 
                 <div class="result-label">
@@ -531,15 +569,19 @@ with tab1:
                 </div>
 
                 <div class="result-description">
-                    Visible mobile phones detected in this image.
+                    Visible mobile phones detected
+                    in this classroom image.
                 </div>
 
             </div>
-            """, unsafe_allow_html=True)
+            """)
+
+
+            # ================= PHONE DETECTED =================
 
             if len(boxes) > 0:
 
-                st.markdown(f"""
+                html(f"""
                 <div class="status-detected">
 
                     <div class="status-title">
@@ -552,24 +594,35 @@ with tab1:
                     </div>
 
                 </div>
-                """, unsafe_allow_html=True)
+                """)
+
 
                 st.write("")
 
                 st.markdown("### Confidence")
 
+
                 for i, box in enumerate(boxes):
 
-                    conf = float(box.conf[0]) * 100
+                    confidence = float(
+                        box.conf[0]
+                    ) * 100
+
 
                     st.progress(
-                        conf / 100,
-                        text=f"Phone #{i+1} · {conf:.1f}%"
+                        confidence / 100,
+                        text=(
+                            f"Phone #{i + 1} · "
+                            f"{confidence:.1f}%"
+                        )
                     )
+
+
+            # ================= NO PHONE =================
 
             else:
 
-                st.markdown("""
+                html("""
                 <div class="status-normal">
 
                     <div class="status-title">
@@ -577,34 +630,47 @@ with tab1:
                     </div>
 
                     <div class="status-text">
-                        No visible mobile phone was detected
-                        in this classroom image.
+                        No visible mobile phone was
+                        detected in this classroom image.
                     </div>
 
                 </div>
-                """, unsafe_allow_html=True)
+                """)
 
 
 # =========================================================
-# UPLOAD IMAGE
+# TAB 2 — UPLOAD IMAGE
 # =========================================================
 
 with tab2:
 
-    st.markdown(
-        '<div class="section-title">Upload Classroom Image</div>',
-        unsafe_allow_html=True
-    )
+    html("""
+    <div class="section-title">
+        Upload Classroom Image
+    </div>
+    """)
+
 
     uploaded_file = st.file_uploader(
         "Select a classroom image",
-        type=["jpg", "jpeg", "png"]
+        type=[
+            "jpg",
+            "jpeg",
+            "png"
+        ]
     )
+
 
     if uploaded_file is not None:
 
-        image = Image.open(uploaded_file).convert("RGB")
+        image = Image.open(
+            uploaded_file
+        ).convert("RGB")
+
         img_array = np.array(image)
+
+
+        # YOLO Prediction
 
         results = model.predict(
             img_array,
@@ -613,31 +679,47 @@ with tab2:
             verbose=False
         )
 
+
         boxes = results[0].boxes
+
         annotated_img = results[0].plot()
 
-        col1, col2 = st.columns([3, 2], gap="large")
+
+        col1, col2 = st.columns(
+            [3, 2],
+            gap="large"
+        )
+
+
+        # ---------------- IMAGE ----------------
 
         with col1:
 
-            st.markdown(
-                '<div class="section-title">Detection Analysis</div>',
-                unsafe_allow_html=True
-            )
+            html("""
+            <div class="section-title">
+                Detection Analysis
+            </div>
+            """)
+
 
             st.image(
                 annotated_img,
                 use_container_width=True
             )
 
+
+        # ---------------- RESULTS ----------------
+
         with col2:
 
-            st.markdown(
-                '<div class="section-title">Detection Result</div>',
-                unsafe_allow_html=True
-            )
+            html("""
+            <div class="section-title">
+                Detection Result
+            </div>
+            """)
 
-            st.markdown(f"""
+
+            html(f"""
             <div class="result-card">
 
                 <div class="result-label">
@@ -649,15 +731,19 @@ with tab2:
                 </div>
 
                 <div class="result-description">
-                    Visible mobile phones detected in this image.
+                    Visible mobile phones detected
+                    in this uploaded image.
                 </div>
 
             </div>
-            """, unsafe_allow_html=True)
+            """)
+
+
+            # ================= PHONE DETECTED =================
 
             if len(boxes) > 0:
 
-                st.markdown("""
+                html("""
                 <div class="status-detected">
 
                     <div class="status-title">
@@ -665,29 +751,41 @@ with tab2:
                     </div>
 
                     <div class="status-text">
-                        The model detected visible mobile phone(s)
-                        in the uploaded classroom image.
+                        The model detected visible
+                        mobile phone(s) in the
+                        uploaded classroom image.
                     </div>
 
                 </div>
-                """, unsafe_allow_html=True)
+                """)
+
 
                 st.write("")
 
                 st.markdown("### Confidence")
 
+
                 for i, box in enumerate(boxes):
 
-                    conf = float(box.conf[0]) * 100
+                    confidence = float(
+                        box.conf[0]
+                    ) * 100
+
 
                     st.progress(
-                        conf / 100,
-                        text=f"Phone #{i+1} · {conf:.1f}%"
+                        confidence / 100,
+                        text=(
+                            f"Phone #{i + 1} · "
+                            f"{confidence:.1f}%"
+                        )
                     )
+
+
+            # ================= NO PHONE =================
 
             else:
 
-                st.markdown("""
+                html("""
                 <div class="status-normal">
 
                     <div class="status-title">
@@ -695,22 +793,26 @@ with tab2:
                     </div>
 
                     <div class="status-text">
-                        No visible mobile phone was detected
-                        in the uploaded image.
+                        No visible mobile phone was
+                        detected in the uploaded image.
                     </div>
 
                 </div>
-                """, unsafe_allow_html=True)
+                """)
 
 
 # =========================================================
 # FOOTER
 # =========================================================
 
-st.markdown("""
+html("""
 <div class="footer">
+
     AI Vision Lab · AI-Based Phone Detection in Classroom
+
     <br>
+
     Diploma in Artificial Intelligence & Machine Learning
+
 </div>
-""", unsafe_allow_html=True)
+""")
